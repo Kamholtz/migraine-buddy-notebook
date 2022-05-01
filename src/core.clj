@@ -1,7 +1,8 @@
 (ns core
   (:require [nextjournal.clerk :as clerk]
             [dk.ative.docjure.spreadsheet :as ss]
-            [meta-csv.core :as csv]))
+            [meta-csv.core :as csv]
+            [java-time :as jt]))
 
 (defn load-first-sheet
   "Return the first sheet of an Excel spreadsheet as a seq of maps."
@@ -18,7 +19,6 @@
     (mapv #(zipmap headers (map ss/read-cell %)) (rest rows))))
 
 
-;; # :started :lasted :pain-level :affected-activities :potential-triggers :symptoms :most-bothersome-symptom :auras :pain-positions :helpful-medication :somewhat-helpful-medication :unhelpful-medication :unsure-medication :helpful-non-drug-relief-methods :somewhat-helpful-non-drug-relief-methods :unhelpful-non-drug-relief-methods :unsure-non-drug-relief-methods :notes
 (def fields  [{:field :index, :type :long}
               {:field :date, :type :string}
               {:field :lasted, :type :string}
@@ -39,8 +39,12 @@
               {:field :unsure-non-drug-relief-methods, :type :string}
               {:field :notes, :type :string}])
 
+(comment 
+  ; Learning java-time
+  (jt/local-date-time "dd/MM/yy HH:mm" "26/12/21 06:26")
+  (jt/local-date-time "dd/MM/yy HH:mm" "21/12/21 22:00"))
+
 (def mb-path "./datasets/MigraineBuddy_20211216_20220430_1651315369524_-555206987.csv")
-; (def mb-path "./datasets/MigraineBuddy-2.csv")
 
 (def mb-data
   (csv/read-csv mb-path {:header? true :skip 6 :fields fields}))
