@@ -56,18 +56,18 @@
 (def mb-data
   (csv/read-csv mb-path {:header? false :skip 6 :fields fields}))
 
-(defn parse-date-string [date-str]
+(defn str->datetime [date-str]
   (jt/local-date-time "d/MM/yy HH:mm" date-str))
 
-(defn parse-csv [csv-str]
+(defn csv->col [csv-str]
   (str/split csv-str #","))
 
 (comment 
-  (parse-csv "Right Front Head, Left Front Head, Left Eye, Right Eye")
-  (parse-csv nil)
+  (csv->col "Right Front Head, Left Front Head, Left Eye, Right Eye")
+  (csv->col nil)
   )
 
-(defn parse-col [col-key parse-fn]
+(defn get-column-parser [col-key parse-fn]
   (fn [row]
     (let [str-in (col-key row)]
       (if (nil? str-in)
@@ -76,20 +76,20 @@
 
 (def parsed-mb-data
   (->> mb-data
-       (map (parse-col :date parse-date-string))
-       (map (parse-col :affected-activities parse-csv))
-       (map (parse-col :potential-triggers parse-csv))
-       (map (parse-col :symptoms parse-csv))
-       (map (parse-col :auras parse-csv))
-       (map (parse-col :helpful-medication parse-csv))
-       (map (parse-col :somewhat-helpful-medication parse-csv))
-       (map (parse-col :unhelpful-medication parse-csv))
-       (map (parse-col :unsure-medication parse-csv))
-       (map (parse-col :helpful-non-drug-relief-methods parse-csv))
-       (map (parse-col :somewhat-helpful-non-drug-relief-methods parse-csv))
-       (map (parse-col :unhelpful-non-drug-relief-methods parse-csv))
-       (map (parse-col :unsure-non-drug-relief-methods parse-csv))
-       (map (parse-col :pain-positions parse-csv))
+       (map (get-column-parser :date str->datetime))
+       (map (get-column-parser :affected-activities csv->col))
+       (map (get-column-parser :potential-triggers csv->col))
+       (map (get-column-parser :symptoms csv->col))
+       (map (get-column-parser :auras csv->col))
+       (map (get-column-parser :helpful-medication csv->col))
+       (map (get-column-parser :somewhat-helpful-medication csv->col))
+       (map (get-column-parser :unhelpful-medication csv->col))
+       (map (get-column-parser :unsure-medication csv->col))
+       (map (get-column-parser :helpful-non-drug-relief-methods csv->col))
+       (map (get-column-parser :somewhat-helpful-non-drug-relief-methods csv->col))
+       (map (get-column-parser :unhelpful-non-drug-relief-methods csv->col))
+       (map (get-column-parser :unsure-non-drug-relief-methods csv->col))
+       (map (get-column-parser :pain-positions csv->col))
 
        ))
 
