@@ -88,8 +88,21 @@
 (def mb-data
   (csv/read-csv mb-path {:header? false :skip 6 :fields fields}))
 
-(defn str->datetime [date-str]
+(defn str->datetime 
+  "Get a datetime object"
+  [date-str]
   (jt/local-date-time "d/MM/yy HH:mm" date-str))
+
+(defn str->iso-datetime 
+  "Parses to an iso datetime str... I think?"
+  [date-str]
+  (jt/format (str->datetime date-str) ))
+
+(comment 
+
+  (str->iso-datetime "29/04/22 07:03")
+  
+  )
 
 (defn str->vl-datetime [date-str]
       (let [dt (str->datetime date-str)]
@@ -126,7 +139,7 @@
 
 (def parsed-mb-data
   (->> mb-data
-       (map (get-column-parser :date str->vl-datetime))
+       (map (get-column-parser :date str->iso-datetime))
        (map (get-column-parser :affected-activities csv->col))
        (map (get-column-parser :potential-triggers csv->col))
        (map (get-column-parser :symptoms csv->col))
@@ -145,11 +158,12 @@
 
 (clerk/table parsed-mb-data)
 
-(clerk/vl {:width 650
+(clerk/vl {
+           :width 675
            :height 400
            :data {:values parsed-mb-data}
            :mark "line"
-           :encoding {:x {:field :index :type :quantitative}
+           :encoding {:x {:field :date :type :temporal}
                       :y {:field :pain-level :type :quantitative}}
            })
 
