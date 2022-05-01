@@ -67,14 +67,12 @@
   (parse-csv nil)
   )
 
-(defn parse-date [row]
-  (let [date-string (:date row)]
-    (assoc row :date (parse-date-string date-string))))
-
 (defn parse-col [col-key parse-fn]
   (fn [row]
     (let [str-in (col-key row)]
-      (assoc row col-key (parse-fn str-in)))))
+      (if (nil? str-in)
+        row ; Do nothing if nil
+        (assoc row col-key (parse-fn str-in))))))
 
 (def parsed-mb-data
   (->> mb-data
@@ -83,7 +81,14 @@
        (map (parse-col :potential-triggers parse-csv))
        (map (parse-col :symptoms parse-csv))
        (map (parse-col :auras parse-csv))
-       ; (map (parse-col :helpful-medication parse-csv))
+       (map (parse-col :helpful-medication parse-csv))
+       (map (parse-col :somewhat-helpful-medication parse-csv))
+       (map (parse-col :unhelpful-medication parse-csv))
+       (map (parse-col :unsure-medication parse-csv))
+       (map (parse-col :helpful-non-drug-relief-methods parse-csv))
+       (map (parse-col :somewhat-helpful-non-drug-relief-methods parse-csv))
+       (map (parse-col :unhelpful-non-drug-relief-methods parse-csv))
+       (map (parse-col :unsure-non-drug-relief-methods parse-csv))
        (map (parse-col :pain-positions parse-csv))
 
        ))
