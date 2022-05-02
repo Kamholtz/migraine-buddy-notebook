@@ -9,6 +9,7 @@ pom.xml.asc
 /datasets/
 /.clerk/
 /.lsp/
+/.clj-kondo/.cache/
 .lein-deps-sum
 .lein-repl-history
 .lein-plugins/
