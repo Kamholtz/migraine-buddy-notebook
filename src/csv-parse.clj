@@ -26,14 +26,16 @@
   (csv->col nil) ; Exception
   )
 
+(def migraine-dt-format "d/MM/yy HH:mm")
+
 (comment 
   ; Learning java-time
-  (jt/local-date-time "d/MM/yy HH:mm" "4/04/22 06:55")
-  (jt/local-date-time "d/MM/yy HH:mm" "31/01/22 07:42")
+  (jt/local-date-time migraine-dt-format "4/04/22 06:55")
+  (jt/local-date-time migraine-dt-format "31/01/22 07:42")
 
-  (str (jt/local-date-time "d/MM/yy HH:mm" "29/04/22 07:03")) ; "2022-04-29T07:03"
-  (.getMinute (jt/local-date-time "d/MM/yy HH:mm" "29/04/22 07:03"))
-  (jt/as-map (jt/local-date-time "d/MM/yy HH:mm" "29/04/22 07:03"))
+  (str (jt/local-date-time migraine-dt-format "29/04/22 07:03")) ; "2022-04-29T07:03"
+  (.getMinute (jt/local-date-time migraine-dt-format "29/04/22 07:03"))
+  (jt/as-map (jt/local-date-time migraine-dt-format "29/04/22 07:03"))
 
   (-> (jt/local-date-time "dd/MM/yy HH:mm" "21/12/21 22:05")
       (jt/as :minutes-of-hour)))
@@ -42,27 +44,33 @@
 (defn str->datetime 
   "Get a datetime object"
   [date-str]
-  (jt/local-date-time "d/MM/yy HH:mm" date-str))
+  (jt/local-date-time migraine-dt-format date-str))
+
 
 (defn str->iso-datetime 
   "Parses to an iso datetime str... I think?"
   [date-str]
   (jt/format (str->datetime date-str) ))
 
+
 (defn dt->iso-datetime 
   "Datetime to iso datetime string"
   [dt]
   (jt/format dt))
 
+
 (comment 
-  (str->iso-datetime "29/04/22 07:03")
+  (str->iso-datetime "29/04/22 07:03") ; "2022-04-29T07:03"
   )
+
 
 (defn str->date-as-map [date-str] 
   (jt/as-map (str->datetime date-str)))
 
+
 (defn dt->date-as-map [dt] 
   (jt/as-map dt))
+
 
 (defn str->vl-datetime [date-str]
   (let [dt (str->datetime date-str)]
@@ -78,10 +86,13 @@
         (assoc :minutes (.getMinute dt)))))
 
 
+(def health-event-d-format "dd/MM/yyyy")
+
+
 (defn str->date 
   "Get a date object from health event date string"
   [date-str]
-  (jt/local-date "dd/MM/yyyy" date-str))
+  (jt/local-date health-event-d-format date-str))
 
 (comment 
   
@@ -89,6 +100,7 @@
   (-> (str->date "09/04/2022")
       (.toString)) ; "2022-04-09"
   )
+
 
 (defn str->start-date-str 
  "Parse out the start date from the form" 

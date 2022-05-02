@@ -2,6 +2,7 @@
   (:require [meta-csv.core :as csv]
             [csv-parse :as csvp]))
 
+
 (defn get-migraine-data [csv-path]
   (csv/read-csv csv-path 
                 {:header? false 
@@ -26,6 +27,7 @@
                           {:field :unsure-non-drug-relief-methods, :type :string}
                           {:field :notes, :type :string}]}))
   
+
 (defn get-parsed-migraine-data 
   "Return collection of maps with iso dates and csv values as collections"
   [migraine-data]
@@ -60,7 +62,7 @@
                                      :week (second group-key)
                                      :year-and-week group-key
                                      :migraines-in-week (count group)}))
-
+      
        (sort-by (juxt :year :week))))
 
 #_ (clerk/vl 

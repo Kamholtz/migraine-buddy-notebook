@@ -1,33 +1,28 @@
 (ns core
   (:require [nextjournal.clerk :as clerk]
-            [dk.ative.docjure.spreadsheet :as ss]
-            [meta-csv.core :as csv]
-            [java-time :as jt]
-            [clojure.string :as str]
-            [clojure.java.io :as jio]
-            
-            [csv-parse :as csvp]
             [migraine :as m]
             [health-event :as he]))
 
+^{:nextjournal.clerk/viewer :hide-result}
 (use 'debux.core)
 
 ;; Import data and parse for use with Vega Lite
 (def mb-export-path "./datasets/MigraineBuddy_20211216_20220430_1651315369524_-555206987.csv")
 (defonce migraine-import (m/get-migraine-data mb-export-path))
-(defonce health-event-import (he/get-mb-health-event-data mb-export-path))
+(defonce health-event-import (he/get-health-event-data mb-export-path))
 (def parse-migraine-data (m/get-parsed-migraine-data migraine-import))
 (def parsed-health-event-data (he/get-parsed-health-event-data health-event-import))
 
 
 (clerk/html [:h1 "Migraine intensity/day of year"])
 
-(clerk/vl {:width 675
-           :height 400
-           :data {:values parse-migraine-data}
-           :mark "bar"
-           :encoding {:x {:field :date-formatted :type :temporal :title "Date"}
-                      :y {:field :pain-level :type :quantitative :title "Pain Level (0 - 10)"}}})
+(clerk/vl 
+  {:width 675
+   :height 400
+   :data {:values parse-migraine-data}
+   :mark "bar"
+   :encoding {:x {:field :date-formatted :type :temporal :title "Date"}
+              :y {:field :pain-level :type :quantitative :title "Pain Level (0 - 10)"}}})
 
 
 (clerk/html [:h1 "Migraine count/week of year"])
