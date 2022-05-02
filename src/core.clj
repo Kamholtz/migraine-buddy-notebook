@@ -6,6 +6,11 @@
 ^{:nextjournal.clerk/viewer :hide-result}
 (use 'debux.core)
 
+; Command to run in powershell to start repl
+; clj -m nrepl.cmdline `
+; >>     --middleware "[cider.nrepl/cider-middleware]" `
+; >>     --interactive
+
 ;; Import data and parse for use with Vega Lite
 (def mb-export-path "./datasets/MigraineBuddy_20211216_20220430_1651315369524_-555206987.csv")
 (defonce migraine-import (m/get-migraine-data mb-export-path))
