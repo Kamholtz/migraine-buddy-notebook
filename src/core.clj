@@ -10,26 +10,6 @@
 
 (use 'debux.core)
 
-(def fields  [{:field :index, :type :long}
-              {:field :date, :type :string}
-              {:field :lasted, :type :string}
-              {:field :pain-level, :type :long}
-              {:field :affected-activities, :type :string}
-              {:field :potential-triggers, :type :string}
-              {:field :symptoms, :type :string}
-              {:field :most-bothersome-symptom, :type :string}
-              {:field :auras, :type :string}
-              {:field :pain-positions, :type :string}
-              {:field :helpful-medication, :type :string}
-              {:field :somewhat-helpful-medication, :type :string}
-              {:field :unhelpful-medication, :type :string}
-              {:field :unsure-medication, :type :string}
-              {:field :helpful-non-drug-relief-methods, :type :string}
-              {:field :somewhat-helpful-non-drug-relief-methods, :type :string}
-              {:field :unhelpful-non-drug-relief-methods, :type :string}
-              {:field :unsure-non-drug-relief-methods, :type :string}
-              {:field :notes, :type :string}])
-
 (comment 
   ; Learning java-time
   (jt/local-date-time "d/MM/yy HH:mm" "4/04/22 06:55")
@@ -41,13 +21,34 @@
 
   (-> (jt/local-date-time "dd/MM/yy HH:mm" "21/12/21 22:05")
       (jt/as :minutes-of-hour))
-  )
+  ) ; nil
 
 
 (def mb-path "./datasets/MigraineBuddy_20211216_20220430_1651315369524_-555206987.csv")
 
 (def mb-data
-  (csv/read-csv mb-path {:header? false :skip 6 :fields fields}))
+  (csv/read-csv mb-path 
+                {:header? false 
+                 :skip 6 
+                 :fields [{:field :index, :type :long}
+                          {:field :date, :type :string}
+                          {:field :lasted, :type :string}
+                          {:field :pain-level, :type :long}
+                          {:field :affected-activities, :type :string}
+                          {:field :potential-triggers, :type :string}
+                          {:field :symptoms, :type :string}
+                          {:field :most-bothersome-symptom, :type :string}
+                          {:field :auras, :type :string}
+                          {:field :pain-positions, :type :string}
+                          {:field :helpful-medication, :type :string}
+                          {:field :somewhat-helpful-medication, :type :string}
+                          {:field :unhelpful-medication, :type :string}
+                          {:field :unsure-medication, :type :string}
+                          {:field :helpful-non-drug-relief-methods, :type :string}
+                          {:field :somewhat-helpful-non-drug-relief-methods, :type :string}
+                          {:field :unhelpful-non-drug-relief-methods, :type :string}
+                          {:field :unsure-non-drug-relief-methods, :type :string}
+                          {:field :notes, :type :string}]}))
 
 
 (defn get-health-event-line-count 
@@ -60,12 +61,13 @@
              (take-while #(not (str/blank? %)))
              doall)))))
 
-(def num-health-event-lines 
-  (get-health-event-line-count mb-path))
 
-(defn is-empty-csv-col [col]
+(defn is-empty-csv-col 
+  "Returns true if `col` contains one blank string"
+  [col]
   (and (= (count col) 1)
        (str/blank? (first col))))
+
 
 (defn get-mb-health-event-csv 
   "MB health data as a collection of vectors"
@@ -76,6 +78,7 @@
            (take-while #(not (is-empty-csv-col %)))
            doall))))
 
+
 (defn get-mb-health-event-data 
   "MB health data as a collection of maps"
   [path]
@@ -84,7 +87,9 @@
          (repeat [:date :time-period :description :notes])
          (rest csv-data))))
 
+
 (def mb-health-event-data (get-mb-health-event-data mb-path))
+
 
 (defn str->datetime 
   "Get a datetime object"
@@ -234,25 +239,10 @@
   {:width 675
    :height 400
    :data {:values grouped-mb-data}
-   :layer [#_{:mark "rect"
-              :data {:values [{:start [2022 1]
-                               :end [2022 3]
-                               :event "Aaaaa"}
-                              {:start [2022 11]
-                               :end [2022 15]
-                               :event "Bbbbb"}]}
-              :encoding {:x {:field :start
-                             :type :nominal}
-                         :x2 {:field :end
-                              :type :nominal}
-                         :color {:field :event :type :nominal}}}
-
-           {:mark "bar"
+   :layer [{:mark "bar"
             :encoding {:x {:field :year-and-week :type :nominal :title "Year and Week"}
                        :y {:field :migraines-in-week :type :quantitative :title "# Migraines/Week" :scale {:domain [0 10]}}
-                       :color {:value "red"}}}
-           ]
-   })
+                       :color {:value "red"}}}]})
 
 (clerk/table parsed-mb-health-event-data)
 
@@ -263,14 +253,16 @@
    ; https://vega.github.io/vega-lite/docs/layer.html
    ; https://vega.github.io/vega-lite/examples/layer_falkensee.html
    :layer [{:mark "rect"
-            :data {:values parsed-mb-health-event-data}
+            :data {:values (take 2 parsed-mb-health-event-data)}
             :encoding {:x {:field :start-date-formatted
                            ; https://vega.github.io/vega-lite/docs/datetime.html
                            ; https://vega.github.io/vega-lite/docs/timeunit.html
                            :timeUnit :yearmonthdate}
                        :x2 {:field :end-date-formatted
                             :timeUnit :yearmonthdate}
-                       :color {:field :description :type :nominal}}}
+                       :color {:field :description 
+                               :type :nominal
+                               :legend {:orient :bottom}}}}
 
            {:mark "bar"
             :encoding {:x {:title  "Week of year"
