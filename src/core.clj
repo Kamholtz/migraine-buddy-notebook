@@ -6,7 +6,9 @@
             [clojure.string :as str]
             [clojure.set :as cset]
             [clojure.java.io :as jio]
-            [clojure.data.csv :as ccsv]))
+            
+            [migraine :as m]
+            [health-event :as he]))
 
 (use 'debux.core)
 
@@ -20,75 +22,11 @@
   (jt/as-map (jt/local-date-time "d/MM/yy HH:mm" "29/04/22 07:03"))
 
   (-> (jt/local-date-time "dd/MM/yy HH:mm" "21/12/21 22:05")
-      (jt/as :minutes-of-hour))
-  ) ; nil
-
+      (jt/as :minutes-of-hour))) 
 
 (def mb-path "./datasets/MigraineBuddy_20211216_20220430_1651315369524_-555206987.csv")
-
-(def mb-data
-  (csv/read-csv mb-path 
-                {:header? false 
-                 :skip 6 
-                 :fields [{:field :index, :type :long}
-                          {:field :date, :type :string}
-                          {:field :lasted, :type :string}
-                          {:field :pain-level, :type :long}
-                          {:field :affected-activities, :type :string}
-                          {:field :potential-triggers, :type :string}
-                          {:field :symptoms, :type :string}
-                          {:field :most-bothersome-symptom, :type :string}
-                          {:field :auras, :type :string}
-                          {:field :pain-positions, :type :string}
-                          {:field :helpful-medication, :type :string}
-                          {:field :somewhat-helpful-medication, :type :string}
-                          {:field :unhelpful-medication, :type :string}
-                          {:field :unsure-medication, :type :string}
-                          {:field :helpful-non-drug-relief-methods, :type :string}
-                          {:field :somewhat-helpful-non-drug-relief-methods, :type :string}
-                          {:field :unhelpful-non-drug-relief-methods, :type :string}
-                          {:field :unsure-non-drug-relief-methods, :type :string}
-                          {:field :notes, :type :string}]}))
-
-
-(defn get-health-event-line-count 
-  "Return a count of lines in CSV that are health events, including header"
-  [path]
-  (with-open [rdr (jio/reader path)]
-    (let [lseq (line-seq rdr) ]
-      (count 
-        (->> lseq
-             (take-while #(not (str/blank? %)))
-             doall)))))
-
-
-(defn is-empty-csv-col 
-  "Returns true if `col` contains one blank string"
-  [col]
-  (and (= (count col) 1)
-       (str/blank? (first col))))
-
-
-(defn get-mb-health-event-csv 
-  "MB health data as a collection of vectors"
-  [path]
-  (with-open [rdr (jio/reader path)]
-    (let [data (ccsv/read-csv rdr)]
-      (->> data 
-           (take-while #(not (is-empty-csv-col %)))
-           doall))))
-
-
-(defn get-mb-health-event-data 
-  "MB health data as a collection of maps"
-  [path]
-  (let [csv-data (get-mb-health-event-csv path)]
-    (map zipmap 
-         (repeat [:date :time-period :description :notes])
-         (rest csv-data))))
-
-
-(def mb-health-event-data (get-mb-health-event-data mb-path))
+(defonce mb-data (m/get-migraine-data mb-path))
+(defonce mb-health-event-data (he/get-mb-health-event-data mb-path))
 
 
 (defn str->datetime 
