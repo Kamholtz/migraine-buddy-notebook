@@ -2,8 +2,8 @@
   (:require [meta-csv.core :as csv]
             [csv-parse :as csvp]))
 
-(defn get-migraine-data [migraine-csv-path]
-  (csv/read-csv migraine-csv-path 
+(defn get-migraine-data [csv-path]
+  (csv/read-csv csv-path 
                 {:header? false 
                  :skip 6 
                  :fields [{:field :index, :type :long}
@@ -26,8 +26,10 @@
                           {:field :unsure-non-drug-relief-methods, :type :string}
                           {:field :notes, :type :string}]}))
   
-(defn get-parsed-migraine-data [mb-data]
-  (->> mb-data
+(defn get-parsed-migraine-data 
+  "Return collection of maps with iso dates and csv values as collections"
+  [migraine-data]
+  (->> migraine-data
        (map (csvp/get-column-parser :date :date-formatted csvp/str->iso-datetime))
        (map (csvp/get-column-parser :date :date-as-map csvp/str->date-as-map))
        (map (csvp/get-column-parser :affected-activities csvp/csv->col))
@@ -43,3 +45,29 @@
        (map (csvp/get-column-parser :unhelpful-non-drug-relief-methods csvp/csv->col))
        (map (csvp/get-column-parser :unsure-non-drug-relief-methods csvp/csv->col))
        (map (csvp/get-column-parser :pain-positions csvp/csv->col))))
+
+
+(defn get-grouped-by-year-migraine-data
+  "Return migraine data grouped by year and week with number of migraines in each week
+  i.e. {:year .. :week .. :year-and-week :migraines-in=week}"
+  [migraine-data]
+  (->> migraine-data
+       ; Group by year/week of year
+       (group-by #(vector (get-in % [:date-as-map :week-based-year])
+                          (get-in % [:date-as-map :week-of-week-based-year])))
+       ; Count items in group
+       (map (fn [[group-key group]] {:year (first group-key) 
+                                     :week (second group-key)
+                                     :year-and-week group-key
+                                     :migraines-in-week (count group)}))
+
+       (sort-by (juxt :year :week))))
+
+#_ (clerk/vl 
+  {:width 675
+   :height 400
+   :data {:values grouped-mb-data}
+   :layer [{:mark "bar"
+            :encoding {:x {:field :year-and-week :type :nominal :title "Year and Week"}
+                       :y {:field :migraines-in-week :type :quantitative :title "# Migraines/Week" :scale {:domain [0 10]}}
+                       :color {:value "red"}}}]})
