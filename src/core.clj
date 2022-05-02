@@ -96,6 +96,11 @@
   [date-str]
   (jt/format (str->datetime date-str) ))
 
+(defn dt->iso-datetime 
+  "Datetime to iso datetime string"
+  [dt]
+  (jt/format dt))
+
 (comment 
   (str->iso-datetime "29/04/22 07:03")
   )
@@ -176,8 +181,26 @@
 
 (def parsed-mb-health-event-data
   (->> mb-health-event-data
-       (map (get-column-parser :date :start-date-as-map 
-                               date-range-str->start-date-as-map))))
+       ; (map (get-column-parser :date :start-date-as-map 
+       ;                         date-range-str->start-date-as-map))
+       (map (get-column-parser :date :start-date-formatted
+                               #(-> % 
+                                    (str->start-date-str)
+                                    (str->date)
+                                    (dt->iso-datetime))))
+       (map (get-column-parser :date :end-date-formatted
+                               #(-> % 
+                                    (str->start-date-str)
+                                    (str->date)
+                                    (jt/plus (jt/days 28)) 
+                                    (dt->iso-datetime))))))
+
+(comment 
+  
+  (-> (str->date "09/04/2022")
+      (.toString))
+  )
+
 
 ; (clerk/table parsed-mb-data)
 
@@ -206,25 +229,49 @@
 
 (clerk/html [:h1 "Migraine count/week of year"])
 
-(clerk/vl {:width 675
-           :height 400
-           :data {:values grouped-mb-data}
-           :layer [#_{:mark "rect"
-                    :data {:values [{:start [2022 1]
-                                     :end [2022 3]
-                                     :event "Aaaaa"}
-                                    {:start [2022 11]
-                                     :end [2022 15]
-                                     :event "Bbbbb"}]}
-                    :encoding {:x {:field :start
-                                   :type :nominal}
-                               :x2 {:field :end
-                                    :type :nominal}
-                               :color {:field :event :type :nominal}}}
+#_ (clerk/vl 
+  {:width 675
+   :height 400
+   :data {:values grouped-mb-data}
+   :layer [#_{:mark "rect"
+              :data {:values [{:start [2022 1]
+                               :end [2022 3]
+                               :event "Aaaaa"}
+                              {:start [2022 11]
+                               :end [2022 15]
+                               :event "Bbbbb"}]}
+              :encoding {:x {:field :start
+                             :type :nominal}
+                         :x2 {:field :end
+                              :type :nominal}
+                         :color {:field :event :type :nominal}}}
 
-                   {:mark "bar"
-                    :encoding {:x {:field :year-and-week :type :nominal :title "Year and Week"}
-                               :y {:field :migraines-in-week :type :quantitative :title "# Migraines/Week" :scale {:domain [0 10]}}
-                               :color {:value "red"}}}
-                   ]
-           })
+           {:mark "bar"
+            :encoding {:x {:field :year-and-week :type :nominal :title "Year and Week"}
+                       :y {:field :migraines-in-week :type :quantitative :title "# Migraines/Week" :scale {:domain [0 10]}}
+                       :color {:value "red"}}}
+           ]
+   })
+
+(clerk/table parsed-mb-health-event-data)
+
+(clerk/vl 
+  {:width 675
+   :height 400
+   :data {:values parsed-mb-data}
+   :layer [{:mark "rect"
+            :data {:values (take 2 parsed-mb-health-event-data )}
+            :encoding {:x {:field :start-date-formatted
+                           :timeUnit :yearmonthdate}
+                       :x2 {:field :end-date-formatted
+                            :timeUnit :yearmonthdate}
+                       :color {:field :description :type :nominal}}}
+
+           {:mark "bar"
+            :encoding {:x {:title  "Week of year"
+                           :field :date-formatted 
+                           :timeUnit "yearweek"}
+                       :y {:title "# Migraines/Week" 
+                           :aggregate "count" 
+                           :scale {:domain [0 10]}}
+                       :color {:value "red"}}}]})
