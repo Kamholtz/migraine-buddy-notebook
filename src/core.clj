@@ -209,7 +209,22 @@
 (clerk/vl {:width 675
            :height 400
            :data {:values grouped-mb-data}
-           :mark "bar"
-           :encoding {:x {:field :year-and-week :type :nominal :title "Year and Week"}
-                      :y {:field :migraines-in-week :type :quantitative :title "# Migraines/Week" :scale {:domain [0 10]}}}
+           :layer [#_{:mark "rect"
+                    :data {:values [{:start [2022 1]
+                                     :end [2022 3]
+                                     :event "Aaaaa"}
+                                    {:start [2022 11]
+                                     :end [2022 15]
+                                     :event "Bbbbb"}]}
+                    :encoding {:x {:field :start
+                                   :type :nominal}
+                               :x2 {:field :end
+                                    :type :nominal}
+                               :color {:field :event :type :nominal}}}
+
+                   {:mark "bar"
+                    :encoding {:x {:field :year-and-week :type :nominal :title "Year and Week"}
+                               :y {:field :migraines-in-week :type :quantitative :title "# Migraines/Week" :scale {:domain [0 10]}}
+                               :color {:value "red"}}}
+                   ]
            })
