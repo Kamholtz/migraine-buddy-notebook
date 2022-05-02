@@ -104,18 +104,21 @@
   
   )
 
-(defn str->vl-datetime [date-str]
-      (let [dt (str->datetime date-str)]
-        (-> (jt/as-map dt)
-            (select-keys [:year :month-of-year :day-of-month 
-                          :hour-of-day :second-of-minute])
-            (cset/rename-keys  {; Year as is
-                                :month-of-year :month
-                                :day-of-month :date
+(defn str->date-as-map [date-str] 
+  (jt/as-map (str->datetime date-str)))
 
-                                :hour-of-day :hours
-                                :second-of-minute :seconds })
-            (assoc :minutes (.getMinute dt)))))
+(defn str->vl-datetime [date-str]
+  (let [dt (str->datetime date-str)]
+    (-> (jt/as-map dt)
+        (select-keys [:year :month-of-year :day-of-month 
+                      :hour-of-day :second-of-minute])
+        (cset/rename-keys  {; Year as is
+                            :month-of-year :month
+                            :day-of-month :date
+
+                            :hour-of-day :hours
+                            :second-of-minute :seconds })
+        (assoc :minutes (.getMinute dt)))))
 
 (comment 
   
@@ -130,16 +133,21 @@
   (csv->col "Right Front Head, Left Front Head, Left Eye, Right Eye")
   (csv->col nil))
 
-(defn get-column-parser [col-key parse-fn]
-  (fn [row]
-    (let [str-in (col-key row)]
-      (if (nil? str-in)
-        row ; Do nothing if nil, there's no reasonable way to parse
-        (assoc row col-key (parse-fn str-in))))))
+(defn get-column-parser 
+  ([col-from col-to parse-fn]
+   (fn [row]
+     (let [str-in (col-from row)]
+       (if (nil? str-in)
+         row ; Do nothing if nil, there's no reasonable way to parse
+         (assoc row col-to (parse-fn str-in))))))
+
+  ([col-key parse-fn]
+   (get-column-parser col-key col-key parse-fn)))
 
 (def parsed-mb-data
   (->> mb-data
-       (map (get-column-parser :date str->iso-datetime))
+       (map (get-column-parser :date :date-formatted str->iso-datetime))
+       (map (get-column-parser :date :date-as-map str->date-as-map))
        (map (get-column-parser :affected-activities csv->col))
        (map (get-column-parser :potential-triggers csv->col))
        (map (get-column-parser :symptoms csv->col))
@@ -156,15 +164,37 @@
 
        ))
 
-(clerk/table parsed-mb-data)
+; (clerk/table parsed-mb-data)
 
-(clerk/vl {
-           :width 675
+(clerk/html [:h1 "Migraine intensity/day of year"])
+
+(clerk/vl {:width 675
            :height 400
            :data {:values parsed-mb-data}
-           :mark "line"
-           :encoding {:x {:field :date :type :temporal}
-                      :y {:field :pain-level :type :quantitative}}
-           })
+           :mark "bar"
+           :encoding {:x {:field :date-formatted :type :temporal :title "Date"}
+                      :y {:field :pain-level :type :quantitative :title "Pain Level (0 - 10)"}}})
 
+
+(def grouped-mb-data
+  (->> parsed-mb-data
+       ; Group by year/week of year
+       (group-by #(vector (get-in % [:date-as-map :week-based-year])
+                          (get-in % [:date-as-map :week-of-week-based-year])))
+       ; Count items in group
+       (map (fn [[group-key group]] {:year (first group-key) 
+                                     :week (second group-key)
+                                     :year-and-week group-key
+                                     :migraines-in-week (count group)}))
+
+       (sort-by (juxt :year :week))))
+
+(clerk/html [:h1 "Migraine count/week of year"])
+
+(clerk/vl {:width 675
+           :height 400
+           :data {:values grouped-mb-data}
+           :mark "bar"
+           :encoding {:x {:field :year-and-week :type :nominal :title "Year and Week"}
+                      :y {:field :migraines-in-week :type :quantitative :title "# Migraines/Week"}} })
 
