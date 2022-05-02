@@ -4,14 +4,12 @@
             [meta-csv.core :as csv]
             [java-time :as jt]
             [clojure.string :as str]
-            [clojure.set :as cset]))
+            [clojure.set :as cset]
+            [clojure.java.io :as jio]))
 
 
 (def fields  [{:field :index, :type :long}
-              {:field :date, 
-               :type :string 
-               ; :preprocess-fn 
-               }
+              {:field :date, :type :string}
               {:field :lasted, :type :string}
               {:field :pain-level, :type :long}
               {:field :affected-activities, :type :string}
@@ -34,17 +32,9 @@
   ; Learning java-time
   (jt/local-date-time "d/MM/yy HH:mm" "4/04/22 06:55")
   (jt/local-date-time "d/MM/yy HH:mm" "31/01/22 07:42")
-  (jt/local-date-time "d/MM/yy HH:mm" "26/12/21 06:26")
-
-  (jt/local-date-time "d/MM/yy HH:mm" "2/03/22 06:54")
-  (jt/local-date-time "d/MM/yy HH:mm" "28/02/22 16:29")
-  (jt/local-date-time "d/MM/yy HH:mm" "26/02/22 07:49")
-
 
   (str (jt/local-date-time "d/MM/yy HH:mm" "29/04/22 07:03")) ; "2022-04-29T07:03"
-  (jt/get-minute (jt/local-date-time "d/MM/yy HH:mm" "29/04/22 07:03"))
   (.getMinute (jt/local-date-time "d/MM/yy HH:mm" "29/04/22 07:03"))
-  (jt/as-map (jt/local-date-time "d/MM/yy HH:mm" "29/04/22 07:03"))
   (jt/as-map (jt/local-date-time "d/MM/yy HH:mm" "29/04/22 07:03"))
 
   (-> (jt/local-date-time "dd/MM/yy HH:mm" "21/12/21 22:05")
@@ -53,6 +43,22 @@
 
 
 (def mb-path "./datasets/MigraineBuddy_20211216_20220430_1651315369524_-555206987.csv")
+
+(defn get-health-event-line-count 
+  "Return a count of lines in CSV that are health events, including header"
+  [path]
+  (with-open [rdr (jio/reader path)]
+    (let [lseq (line-seq rdr) ]
+      (count 
+        (->> lseq
+             (take-while #(not (str/blank? %)))
+             doall)))))
+
+(def num-health-event-lines 
+  (get-health-event-line-count mb-path))
+
+; (def health-event-data 
+;   (csv/read-csv mb-path {:header? true }))
 
 (def mb-data
   (csv/read-csv mb-path {:header? false :skip 6 :fields fields}))
@@ -159,3 +165,10 @@
            :encoding {:x {:field :year-and-week :type :nominal :title "Year and Week"}
                       :y {:field :migraines-in-week :type :quantitative :title "# Migraines/Week" :scale {:domain [0 10]}}} })
 
+
+; (clerk/vl {:width 675
+;            :height 400
+;            :data {:values grouped-mb-data}
+;            :mark "bar"
+;            :encoding {:x {:field :year-and-week :type :nominal :title "Year and Week"}
+;                       :y {:field :migraines-in-week :type :quantitative :title "# Migraines/Week" :scale {:domain [0 10]}}} })
