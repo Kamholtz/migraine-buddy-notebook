@@ -5,4 +5,6 @@
   cider/cider-nrepl                   {:mvn/version "0.28.3"}
   dk.ative/docjure                    {:mvn/version "1.17.0"}
   meta-csv/meta-csv                   {:mvn/version "0.1.0"}
-  clojure.java-time/clojure.java-time {:mvn/version "0.3.3"}}}
+  clojure.java-time/clojure.java-time {:mvn/version "0.3.3"}
+  org.clojure/data.csv                {:mvn/version "1.0.1"}
+  philoskim/debux                     {:mvn/version "0.8.2"}}}

@@ -5,8 +5,10 @@
             [java-time :as jt]
             [clojure.string :as str]
             [clojure.set :as cset]
-            [clojure.java.io :as jio]))
+            [clojure.java.io :as jio]
+            [clojure.data.csv :as ccsv]))
 
+(use 'debux.core)
 
 (def fields  [{:field :index, :type :long}
               {:field :date, :type :string}
@@ -44,6 +46,10 @@
 
 (def mb-path "./datasets/MigraineBuddy_20211216_20220430_1651315369524_-555206987.csv")
 
+(def mb-data
+  (csv/read-csv mb-path {:header? false :skip 6 :fields fields}))
+
+
 (defn get-health-event-line-count 
   "Return a count of lines in CSV that are health events, including header"
   [path]
@@ -57,11 +63,28 @@
 (def num-health-event-lines 
   (get-health-event-line-count mb-path))
 
-; (def health-event-data 
-;   (csv/read-csv mb-path {:header? true }))
+(defn is-empty-csv-col [col]
+  (and (= (count col) 1)
+       (str/blank? (first col))))
 
-(def mb-data
-  (csv/read-csv mb-path {:header? false :skip 6 :fields fields}))
+(defn get-mb-health-event-csv 
+  "MB health data as a collection of vectors"
+  [path]
+  (with-open [rdr (jio/reader path)]
+    (let [data (ccsv/read-csv rdr)]
+      (->> data 
+           (take-while #(not (is-empty-csv-col %)))
+           doall))))
+
+(defn get-mb-health-event-data 
+  "MB health data as a collection of maps"
+  [path]
+  (let [csv-data (get-mb-health-event-csv path)]
+    (map zipmap 
+         (repeat [:date :time-period :description :notes])
+         (rest csv-data))))
+
+(def mb-health-event-data (get-mb-health-event-data mb-path))
 
 (defn str->datetime 
   "Get a datetime object"
@@ -79,6 +102,9 @@
 
 (defn str->date-as-map [date-str] 
   (jt/as-map (str->datetime date-str)))
+
+(defn dt->date-as-map [dt] 
+  (jt/as-map dt))
 
 (defn str->vl-datetime [date-str]
   (let [dt (str->datetime date-str)]
@@ -131,6 +157,28 @@
 
        ))
 
+(defn str->date 
+  "Get a date object from health event date string"
+  [date-str]
+  (jt/local-date "dd/MM/yyyy" date-str))
+
+
+(defn str->start-date-str 
+ "Parse out the start date from the form" 
+  [date-range-str]
+  (first (str/split date-range-str #" - ")))
+
+(defn date-range-str->start-date-as-map [date-range-str]
+  (-> date-range-str
+      (str->start-date-str)
+      (str->date)
+      (dt->date-as-map)))
+
+(def parsed-mb-health-event-data
+  (->> mb-health-event-data
+       (map (get-column-parser :date :start-date-as-map 
+                               date-range-str->start-date-as-map))))
+
 ; (clerk/table parsed-mb-data)
 
 (clerk/html [:h1 "Migraine intensity/day of year"])
@@ -163,12 +211,5 @@
            :data {:values grouped-mb-data}
            :mark "bar"
            :encoding {:x {:field :year-and-week :type :nominal :title "Year and Week"}
-                      :y {:field :migraines-in-week :type :quantitative :title "# Migraines/Week" :scale {:domain [0 10]}}} })
-
-
-; (clerk/vl {:width 675
-;            :height 400
-;            :data {:values grouped-mb-data}
-;            :mark "bar"
-;            :encoding {:x {:field :year-and-week :type :nominal :title "Year and Week"}
-;                       :y {:field :migraines-in-week :type :quantitative :title "# Migraines/Week" :scale {:domain [0 10]}}} })
+                      :y {:field :migraines-in-week :type :quantitative :title "# Migraines/Week" :scale {:domain [0 10]}}}
+           })
