@@ -31,7 +31,6 @@
               {:field :notes, :type :string}])
 
 (comment 
-  (print last-date)
   ; Learning java-time
   (jt/local-date-time "d/MM/yy HH:mm" "4/04/22 06:55")
   (jt/local-date-time "d/MM/yy HH:mm" "31/01/22 07:42")
@@ -44,42 +43,12 @@
 
   (str (jt/local-date-time "d/MM/yy HH:mm" "29/04/22 07:03")) ; "2022-04-29T07:03"
   (jt/get-minute (jt/local-date-time "d/MM/yy HH:mm" "29/04/22 07:03"))
-
   (.getMinute (jt/local-date-time "d/MM/yy HH:mm" "29/04/22 07:03"))
-
   (jt/as-map (jt/local-date-time "d/MM/yy HH:mm" "29/04/22 07:03"))
-; {:proleptic-month 24267,
-;  :julian-day 2459699,
-;  :week-based-year 2022,
-;  :hour-of-am-pm 7,
-;  :nano-of-second 0,
-;  :era 1,
-;  :rata-die 738274,
-;  :micro-of-day 25380000000,
-;  :day-of-week 5,
-;  :hour-of-day 7,
-;  :month-of-year 4,
-;  :milli-of-second 0,
-;  :micro-of-second 0,
-;  :day-of-month 29,
-;  :year 2022,
-;  :day-of-year 119,
-;  :day-of-quarter 29,
-;  :year-of-era 2022,
-;  :nano-of-day 25380000000000,
-;  :second-of-minute 0,
-;  :second-of-day 25380,
-;  :modified-julian-day 59698,
-;  :week-of-week-based-year 17,
-;  :milli-of-day 25380000,
-;  :quarter-of-year 2}
-
   (jt/as-map (jt/local-date-time "d/MM/yy HH:mm" "29/04/22 07:03"))
-
 
   (-> (jt/local-date-time "dd/MM/yy HH:mm" "21/12/21 22:05")
       (jt/as :minutes-of-hour))
-  
   )
 
 
@@ -99,9 +68,7 @@
   (jt/format (str->datetime date-str) ))
 
 (comment 
-
   (str->iso-datetime "29/04/22 07:03")
-  
   )
 
 (defn str->date-as-map [date-str] 
@@ -119,12 +86,6 @@
                             :hour-of-day :hours
                             :second-of-minute :seconds })
         (assoc :minutes (.getMinute dt)))))
-
-(comment 
-  
-  (str->vl-datetime "21/12/21 22:15")
-
-  )
 
 (defn csv->col [csv-str]
   (str/split csv-str #","))
@@ -196,5 +157,5 @@
            :data {:values grouped-mb-data}
            :mark "bar"
            :encoding {:x {:field :year-and-week :type :nominal :title "Year and Week"}
-                      :y {:field :migraines-in-week :type :quantitative :title "# Migraines/Week"}} })
+                      :y {:field :migraines-in-week :type :quantitative :title "# Migraines/Week" :scale {:domain [0 10]}}} })
 
