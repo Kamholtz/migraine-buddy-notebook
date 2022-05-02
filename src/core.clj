@@ -124,7 +124,9 @@
                             :second-of-minute :seconds })
         (assoc :minutes (.getMinute dt)))))
 
-(defn csv->col [csv-str]
+(defn csv->col 
+  "Split a string separated by commas"
+  [csv-str]
   (str/split csv-str #","))
 
 (comment 
@@ -132,6 +134,7 @@
   (csv->col nil))
 
 (defn get-column-parser 
+  "Returns a fn taking a map that calls `parse-fn` on the data assoc'd with `col-from` key and returns the map with the result assoc'd with `col-to` key"
   ([col-from col-to parse-fn]
    (fn [row]
      (let [str-in (col-from row)]
@@ -158,9 +161,7 @@
        (map (get-column-parser :somewhat-helpful-non-drug-relief-methods csv->col))
        (map (get-column-parser :unhelpful-non-drug-relief-methods csv->col))
        (map (get-column-parser :unsure-non-drug-relief-methods csv->col))
-       (map (get-column-parser :pain-positions csv->col))
-
-       ))
+       (map (get-column-parser :pain-positions csv->col))))
 
 (defn str->date 
   "Get a date object from health event date string"
@@ -173,27 +174,27 @@
   [date-range-str]
   (first (str/split date-range-str #" - ")))
 
-(defn date-range-str->start-date-as-map [date-range-str]
-  (-> date-range-str
-      (str->start-date-str)
-      (str->date)
-      (dt->date-as-map)))
+
+(defn get-with-end-formated-end-date
+  "Return map `m` with :end-date-formatted based on description text"
+  [{:keys [:date :description] :as m}]
+  (let [start-date (-> date 
+                       str->start-date-str
+                       str->date)
+        is-emgality (str/includes? (str/lower-case description) "emgality")
+        days-to-add (if is-emgality 28 1)
+        end-date (jt/plus start-date (jt/days days-to-add))]
+
+    (assoc m :end-date-formatted (dt->iso-datetime end-date))))
 
 (def parsed-mb-health-event-data
   (->> mb-health-event-data
-       ; (map (get-column-parser :date :start-date-as-map 
-       ;                         date-range-str->start-date-as-map))
        (map (get-column-parser :date :start-date-formatted
                                #(-> % 
                                     (str->start-date-str)
                                     (str->date)
                                     (dt->iso-datetime))))
-       (map (get-column-parser :date :end-date-formatted
-                               #(-> % 
-                                    (str->start-date-str)
-                                    (str->date)
-                                    (jt/plus (jt/days 28)) 
-                                    (dt->iso-datetime))))))
+       (map get-with-end-formated-end-date)))
 
 (comment 
   
@@ -259,9 +260,13 @@
   {:width 675
    :height 400
    :data {:values parsed-mb-data}
+   ; https://vega.github.io/vega-lite/docs/layer.html
+   ; https://vega.github.io/vega-lite/examples/layer_falkensee.html
    :layer [{:mark "rect"
-            :data {:values (take 2 parsed-mb-health-event-data )}
+            :data {:values parsed-mb-health-event-data}
             :encoding {:x {:field :start-date-formatted
+                           ; https://vega.github.io/vega-lite/docs/datetime.html
+                           ; https://vega.github.io/vega-lite/docs/timeunit.html
                            :timeUnit :yearmonthdate}
                        :x2 {:field :end-date-formatted
                             :timeUnit :yearmonthdate}
@@ -271,7 +276,8 @@
             :encoding {:x {:title  "Week of year"
                            :field :date-formatted 
                            :timeUnit "yearweek"}
-                       :y {:title "# Migraines/Week" 
+                       :y {:title "Number of migraines/week" 
+                           ; https://vega.github.io/vega-lite/docs/aggregate.html#transform
                            :aggregate "count" 
                            :scale {:domain [0 10]}}
                        :color {:value "red"}}}]})
