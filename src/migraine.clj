@@ -6,7 +6,7 @@
 (defn get-migraine-data [csv-path]
   (csv/read-csv csv-path 
                 {:header? false 
-                 :skip 6 
+                 :skip 8
                  :fields [{:field :index, :type :long}
                           {:field :date, :type :string}
                           {:field :lasted, :type :string}

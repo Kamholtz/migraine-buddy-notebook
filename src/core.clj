@@ -10,11 +10,13 @@
 ; clj -m nrepl.cmdline `
 ; >>     --middleware "[cider.nrepl/cider-middleware]" `
 ; >>     --interactive
+; clj -m nrepl.cmdline --middleware "[cider.nrepl/cider-middleware]" --interactive
+; Navigate to `http://localhost:7777/` in as browser
 
 ;; Import data and parse for use with Vega Lite
-(def mb-export-path "./datasets/MigraineBuddy_20211216_20220430_1651315369524_-555206987.csv")
-(defonce migraine-import (m/get-migraine-data mb-export-path))
-(defonce health-event-import (he/get-health-event-data mb-export-path))
+(def mb-export-path "./datasets/MigraineBuddy_20211217_20220604_1654341310940_-555206987.csv")
+(def migraine-import (m/get-migraine-data mb-export-path))
+(def health-event-import (he/get-health-event-data mb-export-path))
 (def parse-migraine-data (m/get-parsed-migraine-data migraine-import))
 (def parsed-health-event-data (he/get-parsed-health-event-data health-event-import))
 
@@ -38,17 +40,17 @@
   {:width 675
    :height 400
    :data {:values parse-migraine-data}
-   ; https://vega.github.io/vega-lite/docs/layer.html
+   ; https://vega.githubjio/vega-lite/docs/layer.html
    ; https://vega.github.io/vega-lite/examples/layer_falkensee.html
    :layer [{:mark "rect"
-            :data {:values (take 2 parsed-health-event-data)}
+            :data {:values (take 4 parsed-health-event-data)}
             :encoding {:x {:field :start-date-formatted
                            ; https://vega.github.io/vega-lite/docs/datetime.html
                            ; https://vega.github.io/vega-lite/docs/timeunit.html
                            :timeUnit :yearmonthdate}
                        :x2 {:field :end-date-formatted
                             :timeUnit :yearmonthdate}
-                       :color {:field :description 
+                       :color {:field :notes 
                                :type :nominal
                                :legend {:orient :bottom}}}}
 
