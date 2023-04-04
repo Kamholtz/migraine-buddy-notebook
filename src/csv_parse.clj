@@ -26,7 +26,7 @@
   (csv->col nil) ; Exception
   )
 
-(def migraine-dt-format "d/MM/yy HH:mm")
+(def migraine-dt-format "d/MM/yyyy HH:mm")
 
 (comment 
   ; Learning java-time
@@ -51,6 +51,12 @@
   "Parses to an iso datetime str... I think?"
   [date-str]
   (jt/format (str->datetime date-str) ))
+
+(comment
+ (str->datetime "30/05/2022 6:47" )
+ (jt/local-date-time "d/MM/yyyy HH:mm" "30/05/2022 6:47")
+ (str->iso-datetime "30/05/2022 6:47" )
+ )
 
 
 (defn dt->iso-datetime 

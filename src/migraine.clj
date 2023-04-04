@@ -32,6 +32,7 @@
   "Return collection of maps with iso dates and csv values as collections"
   [migraine-data]
   (->> migraine-data
+       ;; Date parsing fails on this column for "30/05/2022 6:47"
        (map (csvp/get-column-parser :date :date-formatted csvp/str->iso-datetime))
        (map (csvp/get-column-parser :date :date-as-map csvp/str->date-as-map))
        (map (csvp/get-column-parser :affected-activities csvp/csv->col))
